@@ -1,0 +1,163 @@
+---
+title: "Hypothesis Test: Difference Between Means"
+output: html_document
+params:
+   result: !r meanCI(n1=500,n2=1000,m1=20,s1=3,m2=15,s2=2,alpha=0.01)
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,comment=NA)
+library(interpretCI)
+library(glue)
+```
+
+```{r,echo=FALSE,message=FALSE}
+x<-params$result
+#x=meanCI(n1=100,n2=100,m1=200,s1=40,m2=190,s2=20,mu=7,alpha=0.05,alternative="greater")
+#x=meanCI(n1=500,n2=1000,m1=20,s1=3,m2=15,s2=2,alpha=0.01,alternative="greater")
+#x=meanCI(acs,Dx,age)
+xresult=x$result[1,]
+
+two.sided<-greater<-less<-FALSE
+if(xresult$alternative=="two.sided") two.sided=TRUE
+if(xresult$alternative=="less") less=TRUE
+if(xresult$alternative=="greater") greater=TRUE
+
+twoS="The null hypothesis will be rejected if the difference between sample means is too big or if it is too small."
+lessS="The null hypothesis will be rejected if the difference between sample means is too small."
+greaterS="The null hypothesis will be rejected if the difference between sample means is too big."
+```
+
+
+This document is prepared automatically using the following R command.
+
+```{r,echo=FALSE}
+call=paste0(deparse(x$call),collapse="")
+x1=paste0("library(interpretCI)\nx=",call,"\ninterpret(x)")
+textBox(x1,italic=TRUE,bg="grey95",lcolor="grey50")
+```
+
+
+
+```{r,echo=FALSE}
+library(glue)
+library(interpretCI)
+if(two.sided){
+if(xresult$mu==0) {
+     claim= "Test the hypothesis that men and women spend equally on refreshment"
+} else {
+     claim= paste0("The team owner claims that the difference in spending money between men and women is equal to ", xresult$mu) 
+}
+} else{
+    if(xresult$mu==0) {
+     claim= paste0("Test the hypothesis that men spend", ifelse(greater,"more","less")," than women on refreshment")
+   } else {
+       claim= paste0("The team owner claims that men spend at least ", xresult$mu, 
+                   ifelse(greater," more"," less")," than women") 
+   }
+}
+```
+
+## Given Problem : `r ifelse(two.sided,"Two","One")`-Tailed Test
+
+```{r,echo=FALSE}
+string=glue("The local baseball team conducts a study to find the amount spent on refreshments at the ball park. Over the course of the season they gather simple random samples of {xresult$n1} men and {xresult$n2} women. For men, the average expenditure was ${round(xresult$m1,2)}, with a standard deviation of ${round(xresult$s1,2)}. For women, it was ${round(xresult$m2,2)}, with a standard deviation of ${round(xresult$s2,2)}.
+
+{claim}. Assume that the two populations are independent and normally distributed.")
+
+textBox(string)
+```
+
+## Hypothesis test
+
+This lesson explains how to conduct a hypothesis test for the difference between two means. The test procedure, called the two-sample t-test, is appropriate when the following conditions are met:
+
+- The sampling method for each sample is simple random sampling.
+
+- The samples are independent.
+
+- Each population is at least 20 times larger than its respective sample.
+
+- The sampling distribution is approximately normal, which is generally the case if any of the following conditions apply.
+
+     + The population distribution is normal.
+     
+     + The population data are symmetric, unimodal, without outliers, and the sample size is 15 or less.
+     
+     + The population data are slightly skewed, unimodal, without outliers, and the sample size is 16 to 40.
+     
+     + The sample size is greater than 40, without outliers.
+
+
+### This approach consists of four steps: 
+
+1. state the hypotheses
+
+2. formulate an analysis plan
+
+3. analyze sample data  
+
+4. interpret results.
+
+
+### 1. State the hypotheses 
+
+The first step is to state the null hypothesis and an alternative hypothesis.
+
+$$Null\ hypothesis(H_0): \mu_1-\mu_2 `r ifelse(two.sided,"=",ifelse(less,">=","<="))` `r xresult$mu`$$
+$$Alternative\ hypothesis(H_1): \mu_1-\mu_2 `r ifelse(two.sided, "\\neq" ,ifelse(less,"<",">"))` `r xresult$mu`$$
+
+Note that these hypotheses constitute a `r ifelse(two.sided,"two","one")`-tailed test. `r ifelse(two.sided,twoS,ifelse(less,lessS,greaterS))`.
+
+
+### 2. Formulate an analysis plan. 
+
+For this analysis, the significance level is `r (1-xresult$alpha)*100`%. Using sample data, we will conduct a **two-sample t-test** of the null hypothesis.
+
+### 3. Analyze sample data
+
+Using sample data, we compute the standard error (SE), degrees of freedom (DF), and the t statistic test statistic (t).
+
+
+$$SE=\sqrt{\frac{s^2_1}{n_1}+\frac{s^2_2}{n_2}}$$
+$$SE=\sqrt{\frac{`r round(xresult$s1,2)`^2}{`r xresult$n1`}+\frac{`r round(xresult$s2,2)`^2}{`r xresult$n2`}}$$
+$$SE=`r round(xresult$se,3)`$$
+
+
+ $$DF=\frac{(\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2})^2}{\frac{(s_1^2/n_1)^2}{n_1-1}+\frac{(s_2^2/n_2)^2}{n_2-1}}$$
+ 
+$$DF=\frac{(\frac{`r round(xresult$s1,2)`^2}{`r xresult$n1`}+\frac{`r round(xresult$s2,2)`^2}{`r xresult$n2`})^2}{\frac{(`r round(xresult$s1,2)`^2/`r xresult$n1`)^2}{`r xresult$n1`-1}+\frac{(`r round(xresult$s2,2)`^2/`r xresult$n2`)^2}{`r xresult$n2`-1}}$$
+$$DF=`r round(xresult$DF,2)`$$
+
+$$t=\frac{(\bar{x_1}-\bar{x_2})-d}{SE} = \frac{(`r round(xresult$m1,2)` -`r round(xresult$m2,2)`)-`r xresult$mu`}{`r round(xresult$se,3)`}=`r round(xresult$t,3)`$$
+
+where $s_1$ is the **standard deviation** of sample 1, $s_2$ is the standard deviation of sample 2, $n_1$ is the size of sample 1, $n_2$ is the size of sample 2, $\bar{x_1}$ is the mean of sample 1, $\bar{x_2}$ is the mean of sample 2, d is the hypothesized difference between population means, and SE is the standard error.
+
+We can plot the mean difference.
+```{r}
+plot(x)
+```
+
+Since we have a `r ifelse(two.sided,"two","one")`-tailed test, the P-value is the probability that the t statistic having `r round(xresult$DF,2)` degrees of freedom is `r if(!greater) "less than"` `r if(!greater) round(-abs(xresult$t),2)` `r if(!less) "or greater than "` `r if(!less) round(abs(xresult$t),2)`.
+
+We use the t Distribution curve to find p value.
+
+```{r}
+draw_t(DF=round(xresult$DF,2),t=xresult$t,alternative=xresult$alternative)
+```
+
+### 4. Interpret results. 
+
+Since the P-value (`r round(xresult$p,3)`) is `r ifelse(xresult$p>xresult$alpha,"greater","less")` than the significance level (`r xresult$alpha`), we can`r if(xresult$p>xresult$alpha) "not"` reject the null hypothesis.
+
+### Result of meanCI()
+
+```{r,echo=FALSE}
+print(x)
+```
+
+
+### Reference
+
+The contents of this document are modified from StatTrek.com.
+Berman H.B., "AP Statistics Tutorial", [online] Available at:  https://stattrek.com/hypothesis-test/difference-in-means.aspx?tutorial=AP URL[Accessed Data: 1/23/2022]. 
